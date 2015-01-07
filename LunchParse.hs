@@ -14,6 +14,8 @@ mensaURL = "http://www.studentenwerk-berlin.de/speiseplan/rss/hu_nord/tag/lang/0
 
 main :: IO ()
 main = do
+    title <- runX $ applicationTitle [ withCurl [] ] mensaURL
+    mapM_ maybePrint title
     menu <- runX $ application [ withCurl [] ] mensaURL
     mapM_ maybePrint menu
   where
@@ -25,6 +27,14 @@ main = do
     --  then exitWith (ExitFailure (0-1))
     --  else exitWith ExitSuccess
 
+
+applicationTitle     :: SysConfigList -> String -> IOSArrow b String
+applicationTitle cfg src
+    = configSysVars cfg                                           -- (0)
+      >>>
+      readDocument [] src
+      >>>
+      (deep ( isElem >>> hasName "title" >>> getChildren >>> getText))
 
 application     :: SysConfigList -> String -> IOSArrow b String
 application cfg src
