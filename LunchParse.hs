@@ -14,9 +14,9 @@ mensaURL = "http://www.studentenwerk-berlin.de/speiseplan/rss/hu_nord/tag/lang/0
 
 main :: IO ()
 main = do
-    title <- runX $ applicationTitle [ withCurl [] ] mensaURL
+    title <- runX $ feedTitle [ withCurl [] ] mensaURL
     mapM_ maybePrint title
-    menu <- runX $ application [ withCurl [] ] mensaURL
+    menu <- runX $ feedInner [ withCurl [] ] mensaURL
     mapM_ maybePrint menu
   where
     maybePrint str =
@@ -27,41 +27,27 @@ main = do
     --  then exitWith (ExitFailure (0-1))
     --  else exitWith ExitSuccess
 
+readFeed :: SysConfigList -> String -> IOSArrow b XmlTree
+readFeed cfg src = configSysVars cfg >>> readDocument [] src
 
-applicationTitle     :: SysConfigList -> String -> IOSArrow b String
-applicationTitle cfg src
-    = configSysVars cfg                                           -- (0)
+feedTitle :: SysConfigList -> String -> IOSArrow b String
+feedTitle cfg src
+    = readFeed cfg src
       >>>
-      readDocument [] src
-      >>>
-      (deep ( isElem >>> hasName "title" >>> getChildren >>> getText))
+      (deep ( isElem >>> hasName "title" /> getText))
 
-application     :: SysConfigList -> String -> IOSArrow b String
-application cfg src
-    = configSysVars cfg                                           -- (0)
+feedInner :: SysConfigList -> String -> IOSArrow b String
+feedInner cfg src
+    = readFeed cfg src
       >>>
-      readDocument [] src
+      (deep ( isElem >>> hasName "description" /> getText ))
       >>>
-      processDocumentRootElement
-      >>>
---      writeDocumentToString [withOutputPLAIN ] -- dst                                        -- (3)
---      >>>
       readFromString [withParseHTML yes]
       >>>
-      (deep ( isElem >>> hasClass "mensa_day_speise_name" >>> getChildren >>> getText))
-      -- >>>
-      -- writeDocumentToString [withOutputPLAIN ] -- dst                                        -- (3)
---      >>>
---      getErrStatus
+      (deep ( isElem >>> hasClass "mensa_day_speise_name" /> getText))
 
+hasClass :: String -> IOSArrow XmlTree XmlTree
 hasClass cls = hasAttrValue "class" chk
   where
     chk s = cls `elem` (words s)
-
-processDocumentRootElement      :: IOSArrow XmlTree String
-processDocumentRootElement      = (deep ( isElem >>> hasName "description" >>> getChildren >>> getText ))
---      >>> withTraceLevel 4 (traceValue 1 show)
- 
-
---    return ()
 
