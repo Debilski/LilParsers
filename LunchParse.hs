@@ -17,9 +17,7 @@ main = do
     feed <- runX $ readFeed [ withCurl [] ] mensaURL
     mapM_ maybePrint feed
   where
-    maybePrint str =
-      let stripped = T.strip $ T.pack str
-      in if (not $ T.null stripped) then putStrLn $ T.unpack stripped
+    maybePrint str = if (not . null . strip $ str) then putStrLn . strip $ str
          else return ()
     --if rc >= c_err
     --  then exitWith (ExitFailure (0-1))
@@ -41,10 +39,23 @@ feedInner
       >>>
       readFromString [withParseHTML yes]
       >>>
-      (deep ( isElem >>> hasClass "mensa_day_speise_name" /> getText))
+      (deep ( isElem >>> hasClass "mensa_day_speise_name" >>> ((getChildren >>> getText >>> nonEmpty) &&& getFoodAttrs) >>> (arr mkLine)))
+  where
+    getFoodAttrs = deep (isElem
+                   >>> hasName "a"
+                   >>> hasClass "zusatz"
+                   >>> getAttrValue "title")
+                   >. listify
+    nonEmpty = isA (\s -> (not . null) . strip $ s)
+    mkLine :: (String, String) -> String
+    mkLine (food, attrs) = (strip food) ++ " (" ++ attrs ++ ")"
+    listify :: [String] -> String
+    listify = T.unpack . (T.intercalate (T.pack ", ")) . (fmap T.pack)
 
 hasClass :: String -> IOSArrow XmlTree XmlTree
 hasClass cls = hasAttrValue "class" chk
   where
     chk s = cls `elem` (words s)
 
+strip :: String -> String
+strip = T.unpack . T.strip . T.pack
