@@ -14,10 +14,8 @@ mensaURL = "http://www.studentenwerk-berlin.de/speiseplan/rss/hu_nord/tag/lang/0
 
 main :: IO ()
 main = do
-    title <- runX $ feedTitle [ withCurl [] ] mensaURL
-    mapM_ maybePrint title
-    menu <- runX $ feedInner [ withCurl [] ] mensaURL
-    mapM_ maybePrint menu
+    feed <- runX $ readFeed [ withCurl [] ] mensaURL
+    mapM_ maybePrint feed
   where
     maybePrint str =
       let stripped = T.strip $ T.pack str
@@ -27,20 +25,19 @@ main = do
     --  then exitWith (ExitFailure (0-1))
     --  else exitWith ExitSuccess
 
-readFeed :: SysConfigList -> String -> IOSArrow b XmlTree
-readFeed cfg src = configSysVars cfg >>> readDocument [] src
+readFeed :: SysConfigList -> String -> IOSArrow b String
+readFeed cfg src
+    = configSysVars cfg
+      >>> readDocument [] src
+      >>> feedTitle
+      <+> feedInner
 
-feedTitle :: SysConfigList -> String -> IOSArrow b String
-feedTitle cfg src
-    = readFeed cfg src
-      >>>
-      (deep ( isElem >>> hasName "title" /> getText))
+feedTitle :: IOSArrow XmlTree String
+feedTitle = deep ( isElem >>> hasName "title" /> getText)
 
-feedInner :: SysConfigList -> String -> IOSArrow b String
-feedInner cfg src
-    = readFeed cfg src
-      >>>
-      (deep ( isElem >>> hasName "description" /> getText ))
+feedInner :: IOSArrow XmlTree String
+feedInner
+    = (deep ( isElem >>> hasName "description" /> getText ))
       >>>
       readFromString [withParseHTML yes]
       >>>
