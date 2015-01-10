@@ -5,6 +5,7 @@ import System.Console.GetOpt
 import System.Exit
 
 import Data.Functor
+import Data.List
 import qualified Data.Text as T
 
 import Text.XML.HXT.Core
@@ -45,12 +46,10 @@ feedInner
                    >>> hasName "a"
                    >>> hasClass "zusatz"
                    >>> getAttrValue "title")
-                   >. listify
+                   >. intercalate ", "
     nonEmpty = isA (\s -> (not . null) . strip $ s)
     mkLine :: (String, String) -> String
     mkLine (food, attrs) = (strip food) ++ " (" ++ attrs ++ ")"
-    listify :: [String] -> String
-    listify = T.unpack . (T.intercalate (T.pack ", ")) . (fmap T.pack)
 
 hasClass :: String -> IOSArrow XmlTree XmlTree
 hasClass cls = hasAttrValue "class" chk
