@@ -1,0 +1,21 @@
+name: lilparsers
+version: 0.1
+build-type: Simple
+cabal-version: >=1.18
+
+executable LunchParse
+  main-is: LunchParse.hs
+  default-language: Haskell2010
+  build-depends: base
+               , hxt
+               , hxt-curl
+               , text
+
+executable WeatherParse
+  main-is: WeatherParse.hs
+  default-language: Haskell2010
+  build-depends: base
+               , hxt
+               , hxt-curl
+               , text
+
