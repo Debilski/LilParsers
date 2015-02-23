@@ -22,11 +22,8 @@ choiceWindow size xs = do
 
 
 getSnip :: [FilePath] -> Int -> RVarT IO [Char]
-getSnip files size = do
-    file <- lift $ choice files
-    chars <- liftIO $ readFile file
-    snip <- lift $ choiceWindow size chars
-    return snip
+getSnip files size =
+    lift (choice files) >>= fmap liftIO readFile >>= fmap lift (choiceWindow size)
 
 main = do
     files <- getCurrentDirectory >>= getDirectoryContents >>= filterM (return . isSuffixOf ".txt")
