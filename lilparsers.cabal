@@ -19,3 +19,35 @@ executable WeatherParse
                , hxt-curl
                , text
 
+executable MonitParse
+  main-is: MonitParse.hs
+  default-language: Haskell2010
+  build-depends: base
+               , text
+               , http-conduit
+               , bytestring
+               , aeson
+
+executable MemParse
+  main-is: MemParse.hs
+  default-language: Haskell2010
+  build-depends: base
+               , text
+               , http-conduit
+               , bytestring
+               , aeson
+
+executable BookPrint
+  main-is: BookPrint.hs
+  default-language: Haskell2010
+  build-depends: base
+               , text
+               , bytestring
+               , directory
+               , filemanip
+               , random-fu
+               , random-source
+               , random-extras
+               , utf8-string
+               , transformers
+
