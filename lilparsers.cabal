@@ -36,6 +36,7 @@ executable MemParse
                , http-conduit
                , bytestring
                , aeson
+               , formatting
 
 executable BookPrint
   main-is: BookPrint.hs
