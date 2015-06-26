@@ -21,7 +21,7 @@ import Data.List
 import qualified Data.Text as T
 import Data.Text.IO
 
-monitoringURL metric host = "http://monitoring/ganglia/api/metrics.php?metric_name=" ++ metric ++ "&host=" ++ host
+monitoringURL metric host = "http://monitoring.itb.pri/ganglia/api/metrics.php?metric_name=" ++ metric ++ "&host=" ++ host
 
 data Metric = Metric {
     status :: String
