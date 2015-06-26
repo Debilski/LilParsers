@@ -16,7 +16,8 @@ berlin = "638242"
 
 main :: IO ()
 main = do
-    feed <- runX $ readFeed [ withCurl [] ] (weatherURL berlin)
+    args <- getArgs
+    feed <- runX $ (readFeed args) [ withCurl [] ] (weatherURL berlin)
     mapM_ maybePrint feed
   where
     maybePrint str = if (not . null . strip $ str) then putStrLn . strip $ str
@@ -25,13 +26,19 @@ main = do
     --  then exitWith (ExitFailure (0-1))
     --  else exitWith ExitSuccess
 
-readFeed :: SysConfigList -> String -> IOSArrow b String
-readFeed cfg src
+readFeed :: [String] -> SysConfigList -> String -> IOSArrow b String
+readFeed args cfg src
     = configSysVars cfg
       >>> readDocument [] src
-      >>> feedCondition
+      >>> if (length args == 0) then
+            currentWeather
+          else
+            forecastWeather (head args)
+  where
+    currentWeather = feedCondition
       <+> feedWind
       <+> feedSunset
+    forecastWeather day = feedForecast day
 
 feedCondition :: IOSArrow XmlTree String
 feedCondition = deep ( isElem >>> hasName "yweather:condition" >>> ( getAttrValue "text" &&& getAttrValue "temp" ) >>> (arr mkLine))
@@ -47,6 +54,12 @@ feedSunset :: IOSArrow XmlTree String
 feedSunset = deep ( isElem >>> hasName "yweather:astronomy" >>> ( getAttrValue "sunrise" &&& getAttrValue "sunset" ) >>> (arr mkLine))
   where
     mkLine (rise, set) = "Sunrise: " ++ rise ++ ", Sunset: " ++ set
+
+feedForecast :: String -> IOSArrow XmlTree String
+feedForecast day = deep ( isElem >>> hasName "yweather:forecast" >>> ( hasAttrValue "day" (== day) >>> getAttrValue "date" &&& getAttrValue "low" &&& getAttrValue "high" &&& getAttrValue "text") >>> (arr mkLine)) `orElse` (constA $ "No forecast available for " ++ day)
+  where
+    mkLine (date, (low, (high, text))) = "Forecast for " ++ date ++ ": " ++ text ++ " between " ++ low ++ " °C and " ++ high ++ " °C"
+
 
 strip :: String -> String
 strip = T.unpack . T.strip . T.pack
