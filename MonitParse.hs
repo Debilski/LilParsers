@@ -16,36 +16,28 @@ import System.Exit
 
 import Data.Functor
 import Data.List
+import Data.Map
 import qualified Data.Text as T
 
+import GangliaParse
 
 
 monitoringURL metric host = "http://monitoring.itb.pri/ganglia/api/metrics.php?metric_name=" ++ metric ++ "&host=" ++ host
-
-data Metric = Metric {
-    status :: String
-  , message :: MetricData
-} deriving (Show,Generic)
-
-data MetricData = MetricData {
-    metric_value :: String
-  , units :: String
-} deriving (Show, Generic)
-
-instance FromJSON Metric
-instance ToJSON Metric
-
-instance FromJSON MetricData
-instance ToJSON MetricData
+hostURL = "http://monitoring.itb.pri/ganglia/api/host.php?action=list"
 
 -- Read the remote copy of the JSON file.
 getJSON :: Text -> Text -> IO B.ByteString
 getJSON metric srv = simpleHttp (monitoringURL (T.unpack metric) (T.unpack srv))
 
-servers = fmap ((flip append) ".itb.pri") ("compute1" : "compute2" : "compute3" : [])
-
 main :: IO ()
-main = mapM_ readServer servers
+main = do
+    let hosts = simpleHttp hostURL
+    d <- (eitherDecode <$> hosts) :: IO (Either String GangliaResult)
+    case d of
+      Left err -> System.IO.putStrLn err
+      Right res -> mapM_ readServer (getServers res)
+  where
+    getServers res = T.pack <$> (clusters . message $ res) ! "Compute Cluster"
 
 readServer :: Text -> IO ()
 readServer srv = do
@@ -57,13 +49,13 @@ readServer srv = do
       Right ps -> putStrLn ps
   where
     line cpu load = (T.unpack srv) ++ ": Load " ++ load ++ " per " ++ cpu ++ " CPUs."
-    val :: Metric -> String
+    val :: GangliaResult -> String
     val = metric_value . message
 
-readMetric :: Text -> Text -> IO (Either String Metric)
+readMetric :: Text -> Text -> IO (Either String GangliaResult)
 readMetric metric srv = do
     -- Get JSON data and decode it
-    d <- (eitherDecode <$> getJSON metric srv) :: IO (Either String Metric)
+    d <- (eitherDecode <$> getJSON metric srv) :: IO (Either String GangliaResult)
     return d
     -- If d is Left, the JSON was malformed.
     -- In that case, we report the error.

@@ -1,5 +1,5 @@
 
-{-# LANGUAGE OverloadedStrings, DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 import Data.Aeson
 import Data.Text hiding (replicate)
@@ -8,7 +8,6 @@ import Control.Applicative
 import Control.Monad
 import qualified Data.ByteString.Lazy as B
 import Network.HTTP.Conduit (simpleHttp)
-import GHC.Generics
 import Debug.Trace
 
 import System.IO
@@ -22,41 +21,14 @@ import Data.Map
 import qualified Data.Text as T
 import Data.Text.IO
 
+import GangliaParse
+
 monitoringURL metric host = "http://monitoring.itb.pri/ganglia/api/metrics.php?metric_name=" ++ metric ++ "&host=" ++ host
 hostURL = "http://monitoring.itb.pri/ganglia/api/host.php?action=list"
-
-data GangliaResult = GangliaResult {
-    status :: String
-  , message :: GangliaData
-} deriving (Show, Generic)
-
-data GangliaData =
-  ClusterData {
-    clusters :: Map String [String]
-  , hosts :: Map String (Map String [String])
-  } |
-  MetricData {
-    metric_value :: String
-  , units :: String
-  } deriving (Show, Generic)
-
-instance FromJSON GangliaResult
-instance ToJSON GangliaResult
-
-instance FromJSON GangliaData
-  where
-    parseJSON (Object o) =
-      MetricData <$> (o .: "metric_value") <*> (o .: "units")
-      <|>
-      ClusterData <$> (o .: "clusters") <*> (o .: "hosts")
-
-instance ToJSON GangliaData
 
 -- Read the remote copy of the JSON file.
 getJSON :: Text -> Text -> IO B.ByteString
 getJSON metric srv = simpleHttp (monitoringURL (T.unpack metric) (T.unpack srv))
-
-servers = fmap ((flip append) ".itb.pri") ("compute1" : "compute2" : "compute3" : [])
 
 main :: IO ()
 main = do
