@@ -3,4 +3,4 @@ packages:
 - '.'
 extra-deps:
 - 'random-extras-0.19'
-resolver: lts-2.15
+resolver: lts-2.20

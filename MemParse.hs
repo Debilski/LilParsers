@@ -18,26 +18,39 @@ import System.Exit
 
 import Data.Functor
 import Data.List
+import Data.Map
 import qualified Data.Text as T
 import Data.Text.IO
 
 monitoringURL metric host = "http://monitoring.itb.pri/ganglia/api/metrics.php?metric_name=" ++ metric ++ "&host=" ++ host
+hostURL = "http://monitoring.itb.pri/ganglia/api/host.php?action=list"
 
-data Metric = Metric {
+data GangliaResult = GangliaResult {
     status :: String
-  , message :: MetricData
-} deriving (Show,Generic)
-
-data MetricData = MetricData {
-    metric_value :: String
-  , units :: String
+  , message :: GangliaData
 } deriving (Show, Generic)
 
-instance FromJSON Metric
-instance ToJSON Metric
+data GangliaData =
+  ClusterData {
+    clusters :: Map String [String]
+  , hosts :: Map String (Map String [String])
+  } |
+  MetricData {
+    metric_value :: String
+  , units :: String
+  } deriving (Show, Generic)
 
-instance FromJSON MetricData
-instance ToJSON MetricData
+instance FromJSON GangliaResult
+instance ToJSON GangliaResult
+
+instance FromJSON GangliaData
+  where
+    parseJSON (Object o) =
+      MetricData <$> (o .: "metric_value") <*> (o .: "units")
+      <|>
+      ClusterData <$> (o .: "clusters") <*> (o .: "hosts")
+
+instance ToJSON GangliaData
 
 -- Read the remote copy of the JSON file.
 getJSON :: Text -> Text -> IO B.ByteString
@@ -46,7 +59,14 @@ getJSON metric srv = simpleHttp (monitoringURL (T.unpack metric) (T.unpack srv))
 servers = fmap ((flip append) ".itb.pri") ("compute1" : "compute2" : "compute3" : [])
 
 main :: IO ()
-main = mapM_ readServer servers
+main = do
+    let hosts = simpleHttp hostURL
+    d <- (eitherDecode <$> hosts) :: IO (Either String GangliaResult)
+    case d of
+      Left err -> System.IO.putStrLn err
+      Right res -> mapM_ readServer (getServers res)
+  where
+    getServers res = T.pack <$> (clusters . message $ res) ! "Compute Cluster"
 
 sizeof_fmt :: String -> Int -> String
 sizeof_fmt suffix num = let
@@ -76,7 +96,7 @@ readServer srv = do
     line :: Int -> Int -> Int -> Int -> Text
     line mem_free mem_total swap_free swap_total = T.pack $ printf "%s: %s Memory %s free (of %s) with %s of swap (total %s)." (T.unpack srv) (bar 30 mem_free mem_total swap_free swap_total) (human mem_free) (human mem_total) (human swap_free) (human swap_total)
     human = sizeof_fmt "B"
-    val :: Metric -> String
+    val :: GangliaResult  -> String
     val = metric_value . message
 
     bar :: Int -> Int -> Int -> Int -> Int -> String
@@ -90,13 +110,13 @@ readServer srv = do
         su = st - sf
       in "[" ++ (replicate mu '=')  ++ (replicate mf ' ') ++ "|" ++ (replicate su '=') ++ (replicate sf ' ') ++ "]"
 
-readMetric :: Text -> Text -> IO (Either String Metric)
+readMetric :: Text -> Text -> IO (Either String GangliaResult )
 readMetric metric srv = do
     -- Get JSON data and decode it
     let json = getJSON metric srv
     json >>= B.hPutStr stderr
     System.IO.hPutStrLn stderr ""
-    d <- (eitherDecode <$> json) :: IO (Either String Metric)
+    d <- (eitherDecode <$> json) :: IO (Either String GangliaResult)
     return d
     -- If d is Left, the JSON was malformed.
     -- In that case, we report the error.

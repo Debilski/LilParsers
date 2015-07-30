@@ -33,6 +33,7 @@ executable MemParse
   default-language: Haskell2010
   build-depends: base
                , text
+               , containers
                , http-conduit
                , bytestring
                , aeson
