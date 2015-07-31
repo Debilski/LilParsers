@@ -3,7 +3,10 @@
 
 module GangliaParse
   ( GangliaResult(..)
-  , GangliaData(..)
+  , ClusterData(..)
+  , MetricData(..)
+  , GangliaMetric
+  , GangliaCluster
   ) where
 
 import Control.Applicative
@@ -12,30 +15,30 @@ import Data.Aeson
 import Data.Map
 import GHC.Generics
 
-data GangliaResult = GangliaResult {
+data GangliaResult a = GangliaResult {
     status :: String
-  , message :: GangliaData
+  , message :: a
 } deriving (Show, Generic)
 
-data GangliaData =
-  ClusterData {
+data ClusterData = ClusterData {
     clusters :: Map String [String]
   , hosts :: Map String (Map String [String])
-  } |
-  MetricData {
+  } deriving (Show, Generic)
+
+data MetricData = MetricData {
     metric_value :: String
   , units :: String
   } deriving (Show, Generic)
 
-instance FromJSON GangliaResult
-instance ToJSON GangliaResult
+instance FromJSON a => FromJSON (GangliaResult a)
+instance ToJSON a => ToJSON (GangliaResult a)
 
-instance FromJSON GangliaData
-  where
-    parseJSON (Object o) =
-      MetricData <$> (o .: "metric_value") <*> (o .: "units")
-      <|>
-      ClusterData <$> (o .: "clusters") <*> (o .: "hosts")
+instance FromJSON ClusterData
+instance ToJSON ClusterData
 
-instance ToJSON GangliaData
+instance FromJSON MetricData
+instance ToJSON MetricData
+
+type GangliaMetric = GangliaResult MetricData
+type GangliaCluster = GangliaResult ClusterData
 

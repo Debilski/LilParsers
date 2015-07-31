@@ -33,7 +33,7 @@ getJSON metric srv = simpleHttp (monitoringURL (T.unpack metric) (T.unpack srv))
 main :: IO ()
 main = do
     let hosts = simpleHttp hostURL
-    d <- (eitherDecode <$> hosts) :: IO (Either String GangliaResult)
+    d <- (eitherDecode <$> hosts) :: IO (Either String GangliaCluster)
     case d of
       Left err -> System.IO.putStrLn err
       Right res -> mapM_ readServer (getServers res)
@@ -68,7 +68,7 @@ readServer srv = do
     line :: Int -> Int -> Int -> Int -> Text
     line mem_free mem_total swap_free swap_total = T.pack $ printf "%s: %s Memory %s free (of %s) with %s of swap (total %s)." (T.unpack srv) (bar 30 mem_free mem_total swap_free swap_total) (human mem_free) (human mem_total) (human swap_free) (human swap_total)
     human = sizeof_fmt "B"
-    val :: GangliaResult  -> String
+    val :: GangliaMetric -> String
     val = metric_value . message
 
     bar :: Int -> Int -> Int -> Int -> Int -> String
@@ -82,13 +82,13 @@ readServer srv = do
         su = st - sf
       in "[" ++ (replicate mu '=')  ++ (replicate mf ' ') ++ "|" ++ (replicate su '=') ++ (replicate sf ' ') ++ "]"
 
-readMetric :: Text -> Text -> IO (Either String GangliaResult )
+readMetric :: Text -> Text -> IO (Either String GangliaMetric)
 readMetric metric srv = do
     -- Get JSON data and decode it
     let json = getJSON metric srv
     json >>= B.hPutStr stderr
     System.IO.hPutStrLn stderr ""
-    d <- (eitherDecode <$> json) :: IO (Either String GangliaResult)
+    d <- (eitherDecode <$> json) :: IO (Either String GangliaMetric)
     return d
     -- If d is Left, the JSON was malformed.
     -- In that case, we report the error.

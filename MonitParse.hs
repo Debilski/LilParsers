@@ -32,7 +32,7 @@ getJSON metric srv = simpleHttp (monitoringURL (T.unpack metric) (T.unpack srv))
 main :: IO ()
 main = do
     let hosts = simpleHttp hostURL
-    d <- (eitherDecode <$> hosts) :: IO (Either String GangliaResult)
+    d <- (eitherDecode <$> hosts) :: IO (Either String GangliaCluster)
     case d of
       Left err -> System.IO.putStrLn err
       Right res -> mapM_ readServer (getServers res)
@@ -49,13 +49,13 @@ readServer srv = do
       Right ps -> putStrLn ps
   where
     line cpu load = (T.unpack srv) ++ ": Load " ++ load ++ " per " ++ cpu ++ " CPUs."
-    val :: GangliaResult -> String
+    val :: GangliaMetric -> String
     val = metric_value . message
 
-readMetric :: Text -> Text -> IO (Either String GangliaResult)
+readMetric :: Text -> Text -> IO (Either String GangliaMetric)
 readMetric metric srv = do
     -- Get JSON data and decode it
-    d <- (eitherDecode <$> getJSON metric srv) :: IO (Either String GangliaResult)
+    d <- (eitherDecode <$> getJSON metric srv) :: IO (Either String GangliaMetric)
     return d
     -- If d is Left, the JSON was malformed.
     -- In that case, we report the error.
