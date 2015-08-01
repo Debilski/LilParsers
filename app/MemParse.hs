@@ -1,27 +1,25 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-import Data.Aeson
-import Data.Text hiding (replicate)
-import Text.Printf
-import Control.Applicative
-import Control.Monad
-import qualified Data.ByteString.Lazy as B
-import Network.HTTP.Conduit (simpleHttp)
-import Debug.Trace
+import           Control.Applicative
+import           Control.Monad
+import           Data.Aeson
+import qualified Data.ByteString.Lazy  as B
+import           Data.Functor
+import           Data.List
+import           Data.Map
+import           Data.Text             hiding (replicate)
+import qualified Data.Text             as T
+import           Data.Text.IO
+import           Debug.Trace
+import           Network.HTTP.Conduit  (simpleHttp)
+import           System.Console.GetOpt
+import           System.Environment
+import           System.Exit
+import           System.IO
+import           Text.Printf
 
-import System.IO
-import System.Environment
-import System.Console.GetOpt
-import System.Exit
-
-import Data.Functor
-import Data.List
-import Data.Map
-import qualified Data.Text as T
-import Data.Text.IO
-
-import GangliaParse
+import           GangliaParse
 
 monitoringURL metric host = "http://monitoring.itb.pri/ganglia/api/metrics.php?metric_name=" ++ metric ++ "&host=" ++ host
 hostURL = "http://monitoring.itb.pri/ganglia/api/host.php?action=list"

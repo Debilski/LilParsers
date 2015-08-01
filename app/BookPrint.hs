@@ -1,18 +1,17 @@
-import Prelude hiding (putStr)
-import Data.ByteString.Char8 (putStr)
-import Data.ByteString.UTF8 (fromString)
 
-import System.IO hiding (putStr)
-import System.Directory
-import System.FilePath.Find
-import Data.Random
-import Data.Random.Lift
-import Data.Random.Source.DevRandom
-import Data.Random.Extras
-
-import Data.List
-import Control.Monad
-import Control.Monad.IO.Class
+import           Control.Monad
+import           Control.Monad.IO.Class
+import           Data.ByteString.Char8        (putStr)
+import           Data.ByteString.UTF8         (fromString)
+import           Data.List
+import           Data.Random
+import           Data.Random.Extras
+import           Data.Random.Lift
+import           Data.Random.Source.DevRandom
+import           Prelude                      hiding (putStr)
+import           System.Directory
+import           System.FilePath.Find
+import           System.IO                    hiding (putStr)
 
 choiceWindow :: Int -> [a] -> RVar [a]
 choiceWindow _ [] = return []

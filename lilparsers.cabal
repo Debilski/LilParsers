@@ -4,60 +4,68 @@ build-type: Simple
 cabal-version: >=1.18
 
 library
-  default-language: Haskell2010
-  build-depends: base
-               , aeson
-               , containers
-  exposed-modules: GangliaParse
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  build-depends:       base
+                     , aeson
+                     , containers
+  exposed-modules:     GangliaParse
 
 executable LunchParse
-  main-is: LunchParse.hs
-  default-language: Haskell2010
-  build-depends: base
-               , hxt
-               , hxt-curl
-               , text
+  hs-source-dirs:      app
+  main-is:             LunchParse.hs
+  build-depends:       base
+                     , hxt
+                     , hxt-curl
+                     , text
+  default-language:    Haskell2010
 
 executable WeatherParse
-  main-is: WeatherParse.hs
-  default-language: Haskell2010
-  build-depends: base
-               , hxt
-               , hxt-curl
-               , text
+  hs-source-dirs:      app
+  main-is:             WeatherParse.hs
+  build-depends:       base
+                     , hxt
+                     , hxt-curl
+                     , text
+  default-language:    Haskell2010
 
 executable MonitParse
-  main-is: MonitParse.hs
-  default-language: Haskell2010
-  build-depends: base
-               , text
-               , containers
-               , http-conduit
-               , bytestring
-               , aeson
+  hs-source-dirs:      app
+  main-is:             MonitParse.hs
+  build-depends:       base
+                     , text
+                     , containers
+                     , http-conduit
+                     , bytestring
+                     , aeson
+                     , lilparsers
+  default-language:    Haskell2010
 
 executable MemParse
-  main-is: MemParse.hs
-  default-language: Haskell2010
-  build-depends: base
-               , text
-               , containers
-               , http-conduit
-               , bytestring
-               , aeson
-               , formatting
+  hs-source-dirs:      app
+  main-is:             MemParse.hs
+  build-depends:       base
+                     , text
+                     , containers
+                     , http-conduit
+                     , bytestring
+                     , aeson
+                     , formatting
+                     , lilparsers
+  default-language:    Haskell2010
 
 executable BookPrint
-  main-is: BookPrint.hs
-  default-language: Haskell2010
-  build-depends: base
-               , text
-               , bytestring
-               , directory
-               , filemanip
-               , random-fu
-               , random-source
-               , random-extras
-               , utf8-string
-               , transformers
+  hs-source-dirs:      app
+  main-is:             BookPrint.hs
+  build-depends:       base
+                     , text
+                     , bytestring
+                     , directory
+                     , filemanip
+                     , random-fu
+                     , random-source
+                     , random-extras
+                     , utf8-string
+                     , transformers
+  default-language:    Haskell2010
 

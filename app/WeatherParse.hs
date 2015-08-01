@@ -1,15 +1,13 @@
 
-import System.IO
-import System.Environment
-import System.Console.GetOpt
-import System.Exit
-
-import Data.Functor
-import Data.List
-import qualified Data.Text as T
-
-import Text.XML.HXT.Core
-import Text.XML.HXT.Curl
+import           Data.Functor
+import           Data.List
+import qualified Data.Text             as T
+import           System.Console.GetOpt
+import           System.Environment
+import           System.Exit
+import           System.IO
+import           Text.XML.HXT.Core
+import           Text.XML.HXT.Curl
 
 weatherURL loc = "http://weather.yahooapis.com/forecastrss?u=c&w=" ++ loc
 berlin = "638242"
