@@ -39,6 +39,7 @@ main = do
     getServers res = T.pack <$> (clusters . message $ res) ! "Compute Cluster"
 
 sizeof_fmt :: String -> Int -> String
+sizeof_fmt suffix 0 = printf "0 %s" suffix
 sizeof_fmt suffix num = let
     units = ["","Ki","Mi","Gi","Ti","Pi","Ei","Zi"] :: [String]
     base = 1024
@@ -52,10 +53,15 @@ sizeof_fmt suffix num = let
 readServer :: Text -> IO ()
 readServer srv = do
     mem_free <- readMetric' "mem_free" srv
+    mem_buffers <- readMetric' "mem_buffers" srv
+    mem_cached <- readMetric' "mem_cached" srv
+    mem_shared <- readMetric' "mem_shared" srv
     mem_total <- readMetric' "mem_total" srv
     swap_free <- readMetric' "swap_free" srv
     swap_total <- readMetric' "swap_total" srv
-    let res = line <$> mem_free <*> mem_total <*> swap_free <*> swap_total
+    let mem_used = Data.List.foldl1 (liftA2 (-)) [mem_total, mem_free, mem_cached]
+    let swap_used = (-) <$> swap_total <*> swap_free
+    let res = line <$> mem_used <*> mem_total <*> swap_used <*> swap_total
     case res of
       Left err -> Data.Text.IO.putStrLn $ T.pack $ printf "%s: No data available." (T.unpack srv)
       Right ps -> Data.Text.IO.putStrLn ps
@@ -64,18 +70,18 @@ readServer srv = do
     readMetric' m s = (fmap . fmap) (read . metric_value . message) (readMetric m s)
 
     line :: Int -> Int -> Int -> Int -> Text
-    line mem_free mem_total swap_free swap_total = T.pack $ printf "%s: %s Memory %s free (of %s) with %s of swap (total %s)." (T.unpack srv) (bar 30 mem_free mem_total swap_free swap_total) (human mem_free) (human mem_total) (human swap_free) (human swap_total)
+    line mem_used mem_total swap_used swap_total = T.pack $ printf "%s: %s Memory %s used (of %s) with %s of swap (total %s)." (T.unpack srv) (bar 30 mem_used mem_total swap_used swap_total) (human mem_used) (human mem_total) (human swap_used) (human swap_total)
     human = sizeof_fmt "B"
     val :: GangliaMetric -> String
     val = metric_value . message
 
     bar :: Int -> Int -> Int -> Int -> Int -> String
-    bar width mem_free mem_total swap_free swap_total =
+    bar width mem_used mem_total swap_used swap_total =
       let
         mt = (width * mem_total) `div` (mem_total + swap_total)
-        mf = (width * mem_free) `div` (mem_total + swap_total)
+        mf = (width * (mem_total - mem_used)) `div` (mem_total + swap_total)
         st = (width * swap_total) `div` (mem_total + swap_total)
-        sf = (width * swap_free) `div` (mem_total + swap_total)
+        sf = (width * (swap_total - swap_used)) `div` (mem_total + swap_total)
         mu = mt - mf
         su = st - sf
       in "[" ++ (replicate mu '=')  ++ (replicate mf ' ') ++ "|" ++ (replicate su '=') ++ (replicate sf ' ') ++ "]"
