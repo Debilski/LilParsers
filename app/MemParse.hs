@@ -21,6 +21,7 @@ import           Text.Printf
 
 import           GangliaParse
 
+monitoringURL :: String -> String -> String
 monitoringURL metric host = "http://monitoring.itb.pri/ganglia/api/metrics.php?metric_name=" ++ metric ++ "&host=" ++ host
 hostURL = "http://monitoring.itb.pri/ganglia/api/host.php?action=list"
 

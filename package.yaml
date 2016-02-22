@@ -1,0 +1,60 @@
+name: lilparsers
+version: 0.1.0
+
+dependencies:
+  - base
+  - hxt
+  - hxt-curl
+  - text
+
+library:
+  source-dirs: src
+  dependencies:
+    - base
+    - aeson
+    - containers
+  exposed-modules:
+    - GangliaParse
+
+executables:
+  LunchParse:
+    source-dirs:      app
+    main:             LunchParse.hs
+
+  WeatherParse:
+    source-dirs:      app
+    main:             WeatherParse.hs
+
+  MonitParse:
+    source-dirs:      app
+    main:             MonitParse.hs
+    dependencies:
+      - lilparsers
+      - containers
+      - http-conduit
+      - bytestring
+      - aeson
+
+  MemParse:
+    source-dirs:      app
+    main:             MemParse.hs
+    dependencies:
+      - lilparsers
+      - containers
+      - http-conduit
+      - bytestring
+      - aeson
+
+  BookPrint:
+    source-dirs:      app
+    main:             BookPrint.hs
+    dependencies:
+      - bytestring
+      - directory
+      - filemanip
+      - random-fu
+      - random-source
+      - random-extras
+      - utf8-string
+      - transformers
+
